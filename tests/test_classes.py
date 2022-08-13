@@ -2,7 +2,6 @@ from tests.examples.classes import Child
 from deep_ast import DeepVisitor
 import ast
 from typing import Any
-import pytest
 
 
 def test_super():
