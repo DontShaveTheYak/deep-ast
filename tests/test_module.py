@@ -159,6 +159,7 @@ def test_nested_method():
     assert v.raw_nodes == expected_nodes
 
 
+@pytest.mark.xfail(strict=True)
 def test_multiple_objects():
 
     expected_parent_nodes = ["Foo.method_c()", "Bar.init()", "Bar.bazz()"]
