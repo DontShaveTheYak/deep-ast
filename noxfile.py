@@ -56,7 +56,6 @@ def mypy(session: Session) -> None:
         "--install-types",
         "--non-interactive",
         "src",
-        "tests",
     ]
     session.install(".")
     session.install("mypy", "pytest")
