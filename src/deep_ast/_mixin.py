@@ -4,24 +4,35 @@ import inspect
 from textwrap import dedent
 import ast
 
-from typing import Any, Optional, Union
-from types import FunctionType, MethodType, MethodWrapperType
+from typing import Any, List, Optional, Union, TYPE_CHECKING
+from types import FunctionType, MethodType, MethodWrapperType, MethodDescriptorType
 
 
-class DeepMixin:
+if TYPE_CHECKING:
+    _Base = ast.NodeVisitor
+else:
+    _Base = object
+
+
+class DeepMixin(_Base):
     def __init__(self) -> None:
         self.module = None
         self.obj = None
-        self.last_obj = None
         self.visited_nodes = 0
-        self.raw_nodes = []
-        self.parent_nodes = []
+        self.raw_nodes: List[str] = []
+        self.parent_nodes: List[str] = []
+        self.last_obj: Union[None, FunctionType, MethodType, object] = None
         super().__init__()
 
     def process_function(self, function: FunctionType, module=None):
         self.module = getmodule(function) if module is None else module
 
+        self.last_obj = function
+
         start_node = self._convert_to_ast_node(function)
+
+        if not start_node:
+            raise Exception(f"Could not find AST node for {function}")
 
         self.visit(start_node)
 
@@ -40,18 +51,28 @@ class DeepMixin:
 
         start_node = self._convert_to_ast_node(method)
 
+        if not start_node:
+            raise Exception(f"Could not find AST node for {method}")
+
         self.visit(start_node)
 
     def _convert_to_ast_node(
-        self, item: Union[FunctionType, MethodType, MethodWrapperType]
+        self,
+        item: Union[FunctionType, MethodType, MethodWrapperType],
+        record_node: bool = True,
     ) -> Optional[ast.AST]:
 
         if isinstance(item, MethodWrapperType):
-            print(f"Unable to process method wrapper. {item}")
-            print(dir(item))
+            # print(f"Unable to process method wrapper: {item.__name__}")
             return None
 
-        self._record_node(item)
+        if isinstance(item, MethodDescriptorType):
+            # print(f"Unable to process method desciption: {item.__name__}")
+            return None
+
+        if record_node:
+            self._record_node(item)
+
         source = self._get_source(item)
 
         return ast.parse(source)
@@ -92,13 +113,16 @@ class DeepMixin:
         # print(source)
         return source
 
-    def _module_search(self, item: str):
+    def _module_search(self, item: str, excludes: Optional[List] = None):
 
-        print(f"Searching in module for {item}")
+        # print(f"Searching for {item}")
+
+        if excludes is None:
+            excludes = []
 
         for name, object in getmembers(self.module):
 
-            if object is self.last_obj:
+            if object in excludes:
                 continue
 
             if name == item:
@@ -107,9 +131,7 @@ class DeepMixin:
                     print(f"Skipping built-in {name}")
                     return None
 
-                print(f"Converting func {name} with type {type(object)}")
-
-                return self._convert_to_ast_node(object)
+                return object
 
             attr = getattr(object, item, None)
 
@@ -119,11 +141,16 @@ class DeepMixin:
                     print(f"Skipping built-in {name}")
                     return None
 
-                print(
-                    f"Converting attr {item=} {attr=} {object=} with type {type(attr)}"
-                )
+                return attr
 
-                return self._convert_to_ast_node(attr)
+    def _find_ast_node(self, item: str):
+
+        item_object = self._module_search(item, [self.last_obj])
+
+        if item_object is None:
+            return item_object
+
+        return self._convert_to_ast_node(item_object)
 
     def visit(self, node: ast.AST) -> Any:
 
@@ -142,27 +169,32 @@ class DeepMixin:
     def _process_attr(self, node: ast.Attribute):
 
         obj_name: Optional[str] = None
-        method_name: Optional[str] = None
+        method_name: str = node.attr
+
+        # like self.name
+        if isinstance(node.value, ast.Attribute):
+            return
 
         # like self.speak()
-        if isinstance(node.value, ast.Attribute):
-            obj_name = node.value.value.id
-            method_name = node.attr
-
         if isinstance(node.value, ast.Name):
-            method_name = node.attr
             obj_name = node.value.id
 
         # like super().speak()
         if isinstance(node.value, ast.Call):
+
+            # todo fix this
+            # like foo().bar().bazz()
+            if isinstance(node.value.func, ast.Attribute):
+                # print("Found nested attribute")
+                # print(ast.dump(node, indent=4))
+                return
+
             method_name = node.attr
-            obj_name = node.value.func.id
+            obj_name = node.value.func.id  # type: ignore[attr-defined]
 
-        print(f"!!!!!!!1 {obj_name=} {method_name=}")
-
-        # if obj_name == "super":
-        #     self._process_super(method_name)
-        #     return
+            if obj_name == "super":
+                self._process_super(method_name)
+                return
 
         # Self doesnt always mean the object we started with... We could be parsing a method on some other
         # class than which we started.
@@ -170,8 +202,6 @@ class DeepMixin:
             method_obj = getattr(self.last_obj, method_name, None)
 
             if method_obj is not None:
-
-                print(f"Converting attr222 {method_name} with type {type(method_obj)}")
 
                 method_node = self._convert_to_ast_node(method_obj)
 
@@ -182,13 +212,16 @@ class DeepMixin:
                 self.visit(method_node)
                 return
 
-            print(f"GELPPLPD {method_name}")
+            # Everthing below this line should not be in the "if" statement...
+            # but doing so makes the problem worse. The problem is with var.foo()
+            # how do you know what class "var" is so you can look up the method "foo".
+            # Right now I dont know but its something I'm going to work on...
 
             # If method_object is None we should still search the module tree for
             # everything but the current obj and start object, this is still a bad approach
             # because there could still be duplicate objects with the same method todo list to fix
 
-            method_node = self._module_search(method_name)
+            method_node = self._find_ast_node(method_name)
 
             if not method_node:
                 # print(f"YOLO search unable to find {method_name} in {self.module}")
@@ -197,25 +230,37 @@ class DeepMixin:
             self.visit(method_node)
             return
 
-    # def _visit_once(self, node):
-    #     """Visit a node."""
-    #     method = "visit_" + node.__class__.__name__
-    #     visitor = getattr(self, method, None)
+    def _get_class_def(self, item: object):
+        class_node = self._convert_to_ast_node(item, record_node=False)  # type: ignore
 
-    #     if visitor is None:
-    #         return
-    #     return visitor(node)
-
-    def _process_super(self, method_name: str):
-
-        class_node = self._convert_to_ast_node(self.last_obj)
+        if class_node is None:
+            raise Exception(f"Unable to get AST node for {item}")
 
         class_def = _find_class_def(class_node)
 
         if class_def is None:
-            Exception(f"Failed to find ClassDef for {self.last_obj}")
+            Exception(f"Failed to find ClassDef for {item}")
 
-        parent_class_names = [parent.id for parent in class_def.bases]
+        return class_def
+
+    def _process_super(self, method_name: str):
+
+        class_def = self._get_class_def(self.last_obj)
+
+        parent_class_names = []
+
+        for parent in class_def.bases:
+            if isinstance(parent, ast.Attribute):
+                parent_class_names.append(parent.attr)
+                continue
+
+            parent_class_names.append(parent.id)
+
+        if not parent_class_names:
+            print(f"Failed to find parent classes for {method_name}")
+            return
+
+        # print(parent_class_names)
 
         parent_search_results = [
             self._module_search(class_name) for class_name in parent_class_names
@@ -225,40 +270,56 @@ class DeepMixin:
             parent_obj for parent_obj in parent_search_results if parent_obj is not None
         ]
 
-        # for child_node in ast.iter_child_nodes(node):
-        #     print(f"BNOUS {child_node.__class__.__name__}")
-        #     # print(child_node.id)
-        #     # print(self.raw_nodes[-1])
+        if not parent_class_objs:
+            print(f"Failed to convert {parent_class_names} to {parent_class_objs}")
 
-        # raise Exception(parent_class_objs, method_name)
+        attr_obj = None
+
+        for parent_obj in parent_class_objs:
+            attr_obj = getattr(parent_obj, method_name, None)
+
+            if attr_obj:
+                break
+
+        if attr_obj is None:
+            print(f"Failed to find {method_name} in {parent_class_objs=}")
+            print(f"{parent_class_objs=}")
+            return
+
+        attr_node = self._convert_to_ast_node(attr_obj)
+
+        if attr_node is None:
+            return
+
+        self.visit(attr_node)
+
+        return
 
     def _proccess_name(self, node: ast.Name):
-        func_name = node.func.id
-        print(f"Function {func_name}")
+        func_name = node.id
 
-        # if func_name == "super":
-        #     self._process_super(node.func)
-        #     return
+        # There is bug for super().foo()
+        # For what ever reason it seems like the attribute foo()
+        # comes first in the AST and then super().
+        if func_name == "super":
+            return
 
-        func_node = self._module_search(func_name)
+        func_node = self._find_ast_node(func_name)
 
         if not func_node:
-            print(f"Unable to find {func_name} in {self.module.__name__}")
+            # print(f"Unable to find {func_name} in {self.module.__name__}")
             return
 
         self.visit(func_node)
 
     def _proccess_call(self, node: ast.Call):
 
-        print(f"Processing call {node.func}")
-
         if isinstance(node.func, ast.Attribute):
-
             self._process_attr(node.func)
             return
 
         if isinstance(node.func, ast.Name):
-            self._proccess_name(node)
+            self._proccess_name(node.func)
             return
 
 
