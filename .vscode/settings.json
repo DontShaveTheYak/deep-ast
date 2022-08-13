@@ -1,5 +1,5 @@
 {
-    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Enabled": false,
     "python.linting.enabled": true,
     "python.formatting.provider": "black",
     "python.testing.pytestArgs": [
@@ -10,4 +10,5 @@
     "python.analysis.diagnosticSeverityOverrides": {
         "reportGeneralTypeIssues": "none"
     },
+    "python.linting.mypyEnabled": true,
 }
