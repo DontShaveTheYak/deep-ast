@@ -165,6 +165,7 @@ def test_nested_method():
     assert v.raw_nodes == expected_nodes
 
 
+@pytest.mark.xfail(strict=True)
 def test_multiple_objects():
 
     expected_parent_nodes = ["Foo.method_c()", "Bar.init()", "Bar.bazz()"]
@@ -223,8 +224,6 @@ def test_example():
 
     v.process_method(HTTPConnection.getresponse, module=http.client)
 
-    print(v.visited_nodes)
-    print(v.parent_nodes)
     assert v.visited_nodes == 24489
     assert v.parent_nodes[0] == "HTTPConnection.getresponse()"
     assert v.parent_nodes[-1] == "HTTPResponse._close_conn()"
@@ -270,7 +269,6 @@ def test_exceptions():
 
     parser.process_method(HTTPConnection.getresponse, module=http.client)
 
-    print(parser.visited_nodes)
     assert parser.visited_nodes == 24489
     assert len(parser.raw_exceptions) == 181
     assert len(parser.found_exceptions) == 8

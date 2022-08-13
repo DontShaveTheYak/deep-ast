@@ -1,4 +1,8 @@
-class Parent:
+class Human:
+    pass
+
+
+class Parent(Human):
     def example_a():
         pass
 
