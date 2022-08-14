@@ -39,3 +39,6 @@ source = ["deep_ast"]
 
 [tool.coverage.report]
 show_missing = true
+
+[tool.isort]
+profile = "black"
