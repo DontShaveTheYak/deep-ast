@@ -1,7 +1,125 @@
-from tests.examples.classes import Child
-from deep_ast import DeepVisitor
 import ast
 from typing import Any
+
+import pytest
+
+from deep_ast import DeepVisitor
+from tests.examples.classes import Child, Foo
+
+
+def test_single_method():
+
+    expected_parent_nodes = ["Foo.method_a()"]
+    expected_nodes = [
+        "Module",
+        "FunctionDef",
+        "arguments",
+        "arg",
+        "Expr",
+        "Call",
+        "Name",
+        "Load",
+        "Constant",
+    ]
+
+    v = DeepVisitor()
+
+    example_class = Foo()
+
+    v.deep_visit(example_class.method_a)
+
+    assert v.visited_nodes == len(expected_nodes)
+    assert v.parent_nodes == expected_parent_nodes
+    assert v.raw_nodes == expected_nodes
+
+
+def test_nested_method():
+
+    expected_parent_nodes = ["Foo.method_b()", "Foo.method_a()"]
+    expected_nodes = [
+        "Module",
+        "FunctionDef",
+        "arguments",
+        "arg",
+        "Expr",
+        "Call",
+        "Module",
+        "FunctionDef",
+        "arguments",
+        "arg",
+        "Expr",
+        "Call",
+        "Name",
+        "Load",
+        "Constant",
+        "Attribute",
+        "Name",
+        "Load",
+        "Load",
+    ]
+
+    v = DeepVisitor()
+
+    example_class = Foo()
+
+    v.deep_visit(example_class.method_b)
+
+    assert v.visited_nodes == len(expected_nodes)
+    assert v.parent_nodes == expected_parent_nodes
+    assert v.raw_nodes == expected_nodes
+
+
+@pytest.mark.xfail(strict=True)
+def test_multiple_objects():
+
+    expected_parent_nodes = ["Foo.method_c()", "Bar.init()", "Bar.bazz()"]
+    expected_nodes = [
+        "Module",
+        "FunctionDef",
+        "arguments",
+        "arg",
+        "Assign",
+        "Name",
+        "Store",
+        "Call",
+        "Module",
+        "ClassDef",
+        "FunctionDef",
+        "arguments",
+        "arg",
+        "Expr",
+        "Call",
+        "Name",
+        "Load",
+        "Constant",
+        "Name",
+        "Load",
+        "Expr",
+        "Call",
+        "Module",
+        "FunctionDef",
+        "arguments",
+        "arg",
+        "Expr",
+        "Call",
+        "Name",
+        "Load",
+        "Constant",
+        "Attribute",
+        "Name",
+        "Load",
+        "Load",
+    ]
+
+    v = DeepVisitor()
+
+    example_class = Foo()
+
+    v.deep_visit(example_class.method_c)
+
+    assert v.visited_nodes == len(expected_nodes)
+    assert v.parent_nodes == expected_parent_nodes
+    assert v.raw_nodes == expected_nodes
 
 
 def test_super():
