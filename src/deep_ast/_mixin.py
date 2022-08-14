@@ -22,54 +22,27 @@ class DeepMixin(_Base):
         self.last_obj: Union[None, FunctionType, MethodType, object] = None
         super().__init__()
 
-    def deep_visit(self, callable: Union[FunctionType, MethodType], module=None):
-        """Visit all AST nodes of the passed in `callable`. This will include the AST
-        of any [ast.Call](https://docs.python.org/3/library/ast.html#ast.Call) nodes that
-        are encountered.
+    def deep_visit(self, callable: Union[FunctionType, MethodType]):
+        """Visit all AST nodes of the passed in `callable`. This will include the AST of any [ast.Call](https://docs.python.org/3/library/ast.html#ast.Call) nodes that are encountered.
 
         Args:
             callable (Union[FunctionType, MethodType]): The function or method that will be "deep" visited.
-            module (_type_, optional): Set this to the module where the `callable` is defined unless you
-            calling `deep_visit` in the same module. Defaults to None.
         """
-        self.module = getmodule(callable) if module is None else module
 
-        if isinstance(callable, MethodType):
-            self._process_method(callable)
-            return
+        start_node = None
 
-        self._process_function(callable)
-        return
+        self.module = getmodule(callable)  # type: ignore
 
-    def _process_function(self, function: FunctionType, module=None):
-        self.module = getmodule(function) if module is None else module
+        parent = get_class_that_defined_method(callable)
 
-        self.last_obj = function
+        if parent:
+            self.obj = parent
+            self.last_obj = parent
 
-        start_node = self._convert_to_ast_node(function)
+        start_node = self._convert_to_ast_node(callable)
 
         if not start_node:
-            raise Exception(f"Could not find AST node for {function}")
-
-        self.visit(start_node)
-
-    def _process_method(self, method: MethodType, module=None):
-        self.module = getmodule(method) if module is None else module
-
-        parent = get_class_that_defined_method(method)
-
-        if parent is None:
-            raise Exception(f"Could not find class for method {method.__name__}")
-
-        self.obj = parent
-        self.last_obj = parent
-
-        method = getattr(parent, method.__name__)
-
-        start_node = self._convert_to_ast_node(method)
-
-        if not start_node:
-            raise Exception(f"Could not find AST node for {method}")
+            raise Exception(f"Could not find AST node for {callable}")
 
         self.visit(start_node)
 
@@ -90,7 +63,11 @@ class DeepMixin(_Base):
         if record_node:
             self._record_node(item)
 
-        source = self._get_source(item)
+        try:
+            source = self._get_source(item)
+        except TypeError:
+            # print(f"Invalid type {type(item)} for {item.__name__}")
+            return None
 
         return ast.parse(source)
 
@@ -120,15 +97,7 @@ class DeepMixin(_Base):
             return
 
     def _get_source(self, item: Any):
-
-        try:
-            source = dedent(getsource(item))
-        except TypeError as e:
-            print(self.raw_nodes[-1])
-            print(self.parent_nodes[-1])
-            raise Exception(f"Invalid type {type(item)} for {item.__name__}") from e
-        # print(source)
-        return source
+        return dedent(getsource(item))
 
     def _module_search(self, item: str, excludes: Optional[List] = None):
 
@@ -144,6 +113,8 @@ class DeepMixin(_Base):
 
             if name == item:
 
+                # For some reason built-in exceptions
+                # get pass this check.
                 if isbuiltin(object):
                     print(f"Skipping built-in {name}")
                     return None
