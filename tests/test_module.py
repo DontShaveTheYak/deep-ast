@@ -19,7 +19,7 @@ def test_single_func():
     ]
     v = DeepVisitor()
 
-    v.process_function(functions.func_a)
+    v.deep_visit(functions.func_a)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -49,7 +49,7 @@ def test_nested_func():
 
     v = DeepVisitor()
 
-    v.process_function(functions.func_b)
+    v.deep_visit(functions.func_b)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -90,7 +90,7 @@ def test_continues():
     ]
     v = DeepVisitor()
 
-    v.process_function(functions.func_d)
+    v.deep_visit(functions.func_d)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -116,7 +116,7 @@ def test_single_method():
 
     example_class = methods.Foo()
 
-    v.process_method(example_class.method_a)
+    v.deep_visit(example_class.method_a)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -152,7 +152,7 @@ def test_nested_method():
 
     example_class = methods.Foo()
 
-    v.process_method(example_class.method_b)
+    v.deep_visit(example_class.method_b)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -205,7 +205,7 @@ def test_multiple_objects():
 
     example_class = methods.Foo()
 
-    v.process_method(example_class.method_c)
+    v.deep_visit(example_class.method_c)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
