@@ -22,7 +22,26 @@ class DeepMixin(_Base):
         self.last_obj: Union[None, FunctionType, MethodType, object] = None
         super().__init__()
 
-    def process_function(self, function: FunctionType, module=None):
+    def deep_visit(self, callable: Union[FunctionType, MethodType], module=None):
+        """Visit all AST nodes of the passed in `callable`. This will include the AST
+        of any [ast.Call](https://docs.python.org/3/library/ast.html#ast.Call) nodes that
+        are encountered.
+
+        Args:
+            callable (Union[FunctionType, MethodType]): The function or method that will be "deep" visited.
+            module (_type_, optional): Set this to the module where the `callable` is defined unless you
+            calling `deep_visit` in the same module. Defaults to None.
+        """
+        self.module = getmodule(callable) if module is None else module
+
+        if isinstance(callable, MethodType):
+            self._process_method(callable)
+            return
+
+        self._process_function(callable)
+        return
+
+    def _process_function(self, function: FunctionType, module=None):
         self.module = getmodule(function) if module is None else module
 
         self.last_obj = function
@@ -34,7 +53,7 @@ class DeepMixin(_Base):
 
         self.visit(start_node)
 
-    def process_method(self, method: MethodType, module=None):
+    def _process_method(self, method: MethodType, module=None):
         self.module = getmodule(method) if module is None else module
 
         parent = get_class_that_defined_method(method)

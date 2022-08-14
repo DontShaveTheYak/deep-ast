@@ -25,7 +25,7 @@ def test_single_func():
     ]
     v = DeepVisitor()
 
-    v.process_function(func_a)
+    v.deep_visit(func_a)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -55,7 +55,7 @@ def test_nested_func():
 
     v = DeepVisitor()
 
-    v.process_function(func_b)
+    v.deep_visit(func_b)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -96,7 +96,7 @@ def test_continues():
     ]
     v = DeepVisitor()
 
-    v.process_function(func_d)
+    v.deep_visit(func_d)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -122,7 +122,7 @@ def test_single_method():
 
     example_class = Foo()
 
-    v.process_method(example_class.method_a)
+    v.deep_visit(example_class.method_a)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -158,7 +158,7 @@ def test_nested_method():
 
     example_class = Foo()
 
-    v.process_method(example_class.method_b)
+    v.deep_visit(example_class.method_b)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -211,7 +211,7 @@ def test_multiple_objects():
 
     example_class = Foo()
 
-    v.process_method(example_class.method_c)
+    v.deep_visit(example_class.method_c)
 
     assert v.visited_nodes == len(expected_nodes)
     assert v.parent_nodes == expected_parent_nodes
@@ -222,7 +222,7 @@ def test_example():
 
     v = DeepVisitor()
 
-    v.process_method(HTTPConnection.getresponse, module=http.client)
+    v.deep_visit(HTTPConnection.getresponse, module=http.client)
 
     assert v.visited_nodes == 24489
     assert v.parent_nodes[0] == "HTTPConnection.getresponse()"
@@ -267,7 +267,7 @@ def test_exceptions():
 
     parser = ParseExceptions()
 
-    parser.process_method(HTTPConnection.getresponse, module=http.client)
+    parser.deep_visit(HTTPConnection.getresponse, module=http.client)
 
     assert parser.visited_nodes == 24489
     assert len(parser.raw_exceptions) == 181

@@ -10,7 +10,7 @@ def test_super():
 
     v = DeepVisitor()
 
-    v.process_method(Child.example_a)
+    v.deep_visit(Child.example_a)
 
     assert v.parent_nodes == expected_parent_nodes
 
@@ -63,7 +63,7 @@ def test_inheritance():
 
     v = WalkClasses()
 
-    v.process_function(Child)
+    v.deep_visit(Child)
 
     assert v.class_parents == expected_parents
     assert v.raw_nodes == expected_raw_nodes
