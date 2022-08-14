@@ -1,12 +1,10 @@
-import functools
-from inspect import getsource, getmembers, isbuiltin, getmodule
-import inspect
-from textwrap import dedent
 import ast
-
-from typing import Any, List, Optional, Union, TYPE_CHECKING
-from types import FunctionType, MethodType, MethodWrapperType, MethodDescriptorType
-
+import functools
+import inspect
+from inspect import getmembers, getmodule, getsource, isbuiltin
+from textwrap import dedent
+from types import FunctionType, MethodDescriptorType, MethodType, MethodWrapperType
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 if TYPE_CHECKING:
     _Base = ast.NodeVisitor
