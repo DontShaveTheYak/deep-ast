@@ -270,8 +270,8 @@ class DeepMixin(_Base):
                 break
 
         if attr_obj is None:
-            print(f"Failed to find {method_name} in {parent_class_objs=}")
-            print(f"{parent_class_objs=}")
+            print(f"Failed to find {method_name} in {parent_class_objs}")
+            print(f"{parent_class_objs}")
             return
 
         attr_node = self._convert_to_ast_node(attr_obj)
