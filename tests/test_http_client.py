@@ -1,5 +1,8 @@
 import ast
+import sys
 from http.client import HTTPConnection
+
+import pytest
 
 from deep_ast import DeepVisitor
 
@@ -38,6 +41,10 @@ class ParseExceptions(DeepVisitor):
         return self.generic_visit(node)
 
 
+@pytest.mark.skipif(
+    sys.version_info != (3, 9),
+    reason="The number of nodes visitied varies between python versions?",
+)
 def test_exceptions():
 
     parser = ParseExceptions()
