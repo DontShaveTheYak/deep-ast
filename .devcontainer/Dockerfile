@@ -53,7 +53,7 @@ RUN --mount=type=cache,target=/home/vscode/.pyenv/cache,uid=1000 \
     pyenv install -s 3.8.13 && \
     pyenv install -s 3.9.12 && \
     pyenv install -s 3.10.4 && \
-    pyenv global 3.9.12 && \
+    pyenv global 3.9.12 3.10.4 3.8.13 3.7.13 && \
     pyenv rehash
 
 # Install poetry to manage our python project
