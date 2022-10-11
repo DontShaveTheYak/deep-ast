@@ -11,6 +11,7 @@
 [![Tests][test-shield]][test-url]
 [![Coverage][codecov-shield]][codecov-url]
 [![License][license-shield]][license-url]
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FDontShaveTheYak%2Fdeep-ast.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FDontShaveTheYak%2Fdeep-ast?ref=badge_shield)
 <!-- [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -189,3 +190,7 @@ Levi - [@shady_cuz](https://twitter.com/shady_cuz)
 [license-shield]: https://img.shields.io/github/license/DontShaveTheYak/deep-ast.svg?style=for-the-badge
 [license-url]: https://github.com/DontShaveTheYak/deep-ast/blob/master/LICENSE.txt
 [product-screenshot]: images/screenshot.png
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FDontShaveTheYak%2Fdeep-ast.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FDontShaveTheYak%2Fdeep-ast?ref=badge_large)
