@@ -97,7 +97,7 @@ class ParseExceptions(DeepVisitor):
 
         exception_obj = node.exc
 
-        if isinstance(exception_obj, (ast.Call, ast.Name):
+        if isinstance(exception_obj, (ast.Call, ast.Name)):
             name = (
                 exception_obj.id
                 if isinstance(exception_obj, ast.Name)
