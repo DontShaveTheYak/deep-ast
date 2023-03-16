@@ -19,7 +19,7 @@ click-log = "^0.4.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"
 black = "^22.6.0"
-flake8 = "^5.0.0"
+flake8 = "^6.0.0"
 flake8-black = "^0.3.3"
 coverage = {extras = ["toml"], version = "^6.4.2"}
 pytest-cov = "^4.0.0"
